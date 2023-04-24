@@ -8,7 +8,7 @@ concrete_data<-read.csv("Concrete_Data.csv")
 
 # Train model
 set.seed(123)
-trainIndex <- createDataPartition(Concrete_Data$ConcreteCompressiveStrength, p = 0.7, list = FALSE)
+trainIndex <- createDataPartition(concrete_data$ConcreteCompressiveStrength, p = 0.7, list = FALSE)
 training <- concrete_data[trainIndex, ]
 testing <- concrete_data[-trainIndex, ]
 model <- train(as.formula("ConcreteCompressiveStrength ~ ."), method = "lm", data = training)
