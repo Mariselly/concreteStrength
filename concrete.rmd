@@ -1,0 +1,81 @@
+---
+title: "Markdown"
+author: "Mariselly Alvarez"
+output: html_document
+date: "2023-04-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This is the report for the assigned Case Study 3.
+The first step for this assignment was to find a suitable data set to work on.
+The data set chosen is named Concrete Compressive Strength. It is located in the following link:
+https://archive.ics.uci.edu/ml/datasets.php
+
+This topic was selected because of my background in civil engineering.
+I work as a quality assurance technician. Although I specialize in asphalt
+binder, I am interested in all type of materials and its behavior.
+I explored other options while picking my data set, but always came back to
+the concrete file, my roots.
+
+To analyze the data I went through several iterations just to be able to decide
+which approach I wanted to use.
+I started with PCA, and clustering
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(psych)
+concrete_data<-read.csv("Concrete_Data.csv")
+# To visualize the data. Make a scatter plot of Compressive strength vs time measured in days
+x <- concrete_data$Age
+y <- concrete_data$ConcreteCompressiveStrength
+
+myplot <- plot.default(x, y, type="p", main = "Compressive Strength vs time", xlab = "Time (days)", ylab = "Compressive Strength (MPa)")
+png("myplot", width = 800, height = 600)
+# The bulk of the samples were tested during the first 100 days.
+# That is when the compressive strength reaches the stabilization of the logarithmic curve.
+
+# perform PCA analysis
+pca <- principal(concrete_data, nfactors = 8, rotate = "none")
+pca
+# print the summary of PCA analysis
+summary(pca)
+```
+Then realized that more than finding patterns, I wanted to make predictions.
+So, I switched to a Linear Regression Model.
+
+```{r}
+library(shiny)
+library(readr)
+library(caret)
+
+# Read CSV file
+concrete_data<-read.csv("Concrete_Data.csv")
+
+# Train model
+set.seed(123)
+trainIndex <- createDataPartition(concrete_data$ConcreteCompressiveStrength, p = 0.7, list = FALSE)
+training <- concrete_data[trainIndex, ]
+testing <- concrete_data[-trainIndex, ]
+model <- train(as.formula("ConcreteCompressiveStrength ~ ."), method = "lm", data = training)
+```
+In this last chunk of code, the model takes a pieces of the data file for training purposes, 70% of the data. The remaining of the data was separated for testing purposes. On the line where model is defined, the method of chooice was linear model.
+
+This model brought me very close to where I wanted to get with my data. The model
+produced  predictions that were close to the real values. 
+
+After several iterations, I decided to look back to the basis and nature of the data. After doing so, I believe I know why my values are not closer.
+
+The stress-strain curve for concrete is linear only in the elastic part of the curve.
+This is the region where if you release the applied force, the material will
+recover form the deformation caused by the force.
+Where this analysis gets tricky is where the plastic part of the curve kicks in.
+This is the region where if the applied force is removed from the sample, the material will not be able to fully recover from the deformation caused by the force.
+This part of the curve is not linear.
+
+When I look deeper, I realized that the data set only provides information on
+stress, not strain. Without strain values, it is not possible to make an accurate model of concrete behavior.
+
+An option to make the current model more accurate, would be to limit its use to the elastic behavior exclusively. That reasoning poses a big problem into its application because the point where a mix design reaches the yield point, (which where the behavior changes from elastic to plastic), is not the same for every sample.
+
